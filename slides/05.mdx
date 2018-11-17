@@ -1,0 +1,113 @@
+# What makes React so hard?
+
+- 📦 JavaScript
+- 🔄 Lifecycles
+- ⬛️ Logic Reuse (patterns)
+
+<!--
+
+
+
+
+
+
+
+-->
+
+## 📦 JavaScript
+
+```javascript
+// find the 🐛
+import React from 'react'
+
+class Counter extends React.Component {
+  constructor() {
+    super()
+    this.state = {count: this.props.initialCount}
+  }
+  increment() {
+    this.setState(({count}) => ({count: count + 1}))
+  }
+  render() {
+    return (
+      <button onClick={this.increment}>
+        Current Count: {this.state.count}
+      </button>
+    )
+  }
+}
+```
+
+TRICK QUESTION! THERE WERE TWO 🐛 🐜! DID YOU FIND THEM?
+
+## 🔄 Lifecycles
+
+```javascript
+import React from 'react'
+import UserContext from '../user-context'
+
+class ChatFeed extends React.Component {
+  static contextType = UserContext
+  state = {isScrolledToBottom: true}
+  componentDidMount() {
+    this.subscribeToFeed()
+    this.setDocumentTitle()
+    this.subscribeToOnlineStatus()
+    this.subscribeToGeoLocation()
+  }
+  componentWillUnmount() {
+    this.unsubscribeFromFeed()
+    this.restoreDocumentTitle()
+    this.unsubscribeFromOnlineStatus()
+    this.unsubscribeFromGeoLocation()
+  }
+  componentDidUpdate(prevProps, prevState) {
+    // ... compare props and re-subscribe etc.
+  }
+  render() {
+    // ...
+  }
+}
+```
+
+## ⬛️ Logic Reuse
+
+```javascript
+import React from 'react'
+import UserContext from '../user-context'
+
+function ChatFeed({feedId}) {
+  return (
+    <UserContext.Consumer>
+      {user => (
+        <SubscribeToFeed feedId={feedId}>
+          {posts => (
+            <>
+              <DocumentTitle title={posts.length} />
+              <OnlineStatus>
+                {isOnline => (
+                  <GeoLocation>
+                    {location => (
+                      <>
+                        <StickyScroller>
+                          <Posts posts={posts} />
+                        </StickyScroller>
+                        <PostInput
+                          feedId={feedId}
+                          user={user}
+                        />
+                      </>
+                    )}
+                  </GeoLocation>
+                )}
+              </OnlineStatus>
+            </>
+          )}
+        </SubscribeToFeed>
+      )}
+    </UserContext.Consumer>
+  )
+}
+```
+
+... LOL 😂🤣 ... 😢😭😭😭😭

@@ -1,0 +1,31 @@
+{
+  "name": "react-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "emotion": "^9.2.12",
+    "firebase": "5.5.8",
+    "react": "^16.7.0-alpha.2",
+    "react-cache": "2.0.0-alpha.1",
+    "react-dom": "^16.7.0-alpha.2",
+    "react-emotion": "^9.2.12",
+    "react-error-boundary": "1.2.3",
+    "react-fns": "1.4.0",
+    "react-scripts": "^2.1.1",
+    "the-platform": "0.9.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
