@@ -89,9 +89,11 @@ function App() {
   const {
     coords: {latitude, longitude},
   } = useGeoPosition()
-  const usernameRef = useRef()
   const messegesContainerRef = useRef()
   const [messeges, setMesseges] = useState([])
+  const [username, setUsername] = useState(() =>
+    window.localStorage.getItem('geo-chat:username'),
+  )
   useStickyScrollContainer(messegesContainerRef, [
     messeges.length,
   ])
@@ -105,7 +107,7 @@ function App() {
     firebase.addMessege({
       latitude,
       longitude,
-      username: usernameRef.current.value || 'anonymous',
+      username: username || 'anonymous',
       content: e.target.elements.messege.value,
     })
     e.target.elements.messege.value = ''
@@ -136,13 +138,27 @@ function App() {
     [unreadCount],
   )
 
+  function handleUsernameChange(e) {
+    const username = e.target.value
+    setUsername(username)
+    window.localStorage.setItem(
+      'geo-chat:username',
+      username,
+    )
+  }
+
   return (
     <div>
       <label htmlFor="username">Username</label>
-      <input id="username" ref={usernameRef} />
+      <input
+        type="text"
+        id="username"
+        value={username}
+        onChange={handleUsernameChange}
+      />
       <form onSubmit={sendMessege}>
         <label htmlFor="messege">Messege</label>
-        <input id="messege" />
+        <input type="text" id="messege" />
         <button type="submit">send</button>
       </form>
       <pre>
@@ -155,6 +171,8 @@ function App() {
           border: '1px solid',
           height: 200,
           overflowY: 'scroll',
+          padding: '10px 20px',
+          borderRadius: 6,
         }}
       >
         {messeges.map(messege => (

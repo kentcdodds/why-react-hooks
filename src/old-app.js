@@ -22,16 +22,21 @@ class App extends React.Component {
     latitude: 40,
     longitude: -111,
   }
-  state = {messeges: [], seenNodes: [], isStuck: true}
-  usernameRef = React.createRef()
+  state = {
+    username: window.localStorage.getItem(
+      'geo-chat:username',
+    ),
+    messeges: [],
+    seenNodes: [],
+    isStuck: true,
+  }
   messegesContainerRef = React.createRef()
   sendMessege = e => {
     e.preventDefault()
     firebase.addMessege({
       latitude: this.props.latitude,
       longitude: this.props.longitude,
-      username:
-        this.usernameRef.current.value || 'anonymous',
+      username: this.state.username.value || 'anonymous',
       content: e.target.elements.messege.value,
     })
     e.target.elements.messege.value = ''
@@ -122,6 +127,14 @@ class App extends React.Component {
       }))
     }
   }
+  handleUsernameChange = e => {
+    const username = e.target.value
+    this.setState({username})
+    window.localStorage.setItem(
+      'geo-chat:username',
+      username,
+    )
+  }
   componentWillUnmount() {
     this.untrackStuck()
     this.unsubscribeFromFirebase()
@@ -131,10 +144,15 @@ class App extends React.Component {
     return (
       <div>
         <label htmlFor="username">Username</label>
-        <input id="username" ref={this.usernameRef} />
+        <input
+          type="text"
+          id="username"
+          value={this.state.username}
+          onChange={this.handleUsernameChange}
+        />
         <form onSubmit={this.sendMessege}>
           <label htmlFor="messege">Messege</label>
-          <input id="messege" />
+          <input type="text" id="messege" />
           <button type="submit">send</button>
         </form>
         <pre>
@@ -147,6 +165,8 @@ class App extends React.Component {
             border: '1px solid',
             height: 200,
             overflowY: 'scroll',
+            padding: '10px 20px',
+            borderRadius: 6,
           }}
         >
           {this.state.messeges.map(messege => (
