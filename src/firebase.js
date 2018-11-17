@@ -48,6 +48,8 @@ function subscribe({latitude, longitude}, callback) {
 }
 
 const getLocationId = ({latitude, longitude}) =>
-  `${latitude.toFixed()}-${longitude.toFixed()}`
+  `${(latitude * 10).toFixed()}_${(
+    longitude * 10
+  ).toFixed()}`
 
 export {subscribe, addMessege}
