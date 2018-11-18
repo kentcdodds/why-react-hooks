@@ -157,7 +157,7 @@ function App() {
         onChange={handleUsernameChange}
       />
       <form onSubmit={sendMessage}>
-        <label htmlFor="essage">Message</label>
+        <label htmlFor="message">Message</label>
         <input type="text" id="message" />
         <button type="submit">send</button>
       </form>
