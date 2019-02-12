@@ -31,20 +31,17 @@ function useStickyScrollContainer(
       )
   }, [])
 
-  useEffect(
-    () => {
-      if (isStuck) {
-        scrollContainerRef.current.scrollTop =
-          scrollContainerRef.current.scrollHeight
-      }
-    },
-    [
-      scrollContainerRef.current
-        ? scrollContainerRef.current.scrollHeight
-        : 0,
-      ...inputs,
-    ],
-  )
+  useEffect(() => {
+    if (isStuck) {
+      scrollContainerRef.current.scrollTop =
+        scrollContainerRef.current.scrollHeight
+    }
+  }, [
+    scrollContainerRef.current
+      ? scrollContainerRef.current.scrollHeight
+      : 0,
+    ...inputs,
+  ])
 
   return isStuck
 }
@@ -114,29 +111,23 @@ function App() {
     e.target.elements.message.focus()
   }
 
-  useEffect(
-    () => {
-      const unsubscribe = firebase.subscribe(
-        {latitude, longitude},
-        messages => {
-          setMessages(messages)
-        },
-      )
-      return () => {
-        unsubscribe()
-      }
-    },
-    [latitude, longitude],
-  )
+  useEffect(() => {
+    const unsubscribe = firebase.subscribe(
+      {latitude, longitude},
+      messages => {
+        setMessages(messages)
+      },
+    )
+    return () => {
+      unsubscribe()
+    }
+  }, [latitude, longitude])
 
-  useEffect(
-    () => {
-      document.title = unreadCount
-        ? `Unread: ${unreadCount}`
-        : 'All read'
-    },
-    [unreadCount],
-  )
+  useEffect(() => {
+    document.title = unreadCount
+      ? `Unread: ${unreadCount}`
+      : 'All read'
+  }, [unreadCount])
 
   function handleUsernameChange(e) {
     const username = e.target.value
