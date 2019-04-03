@@ -1,17 +1,18 @@
 {
-  "name": "react-app",
+  "name": "why-react-hooks",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@firebase/app-types": "0.3.3",
-    "firebase": "5.5.8",
+    "@firebase/app-types": "0.3.7",
+    "firebase": "5.9.2",
     "milligram": "1.3.0",
     "react": "16.7.0-alpha.2",
+    "react-cache": "^2.0.0-alpha.1",
     "react-dom": "16.7.0-alpha.2",
-    "react-error-boundary": "1.2.3",
+    "react-error-boundary": "1.2.5",
     "react-fns": "1.4.0",
-    "react-scripts": "2.1.3",
-    "the-platform": "0.9.3"
+    "react-scripts": "2.1.8",
+    "the-platform": "0.10.0"
   },
   "scripts": {
     "start": "react-scripts start",
