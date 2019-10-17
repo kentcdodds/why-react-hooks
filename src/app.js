@@ -1,6 +1,31 @@
 import React, {useEffect, useState, useRef} from 'react'
-import {useGeoPosition} from 'the-platform'
 import * as firebase from './firebase'
+
+function useGeoPosition(options) {
+  const [position, setPosition] = useState(
+    getInitialPosition(options),
+  )
+  const [error, setError] = useState(null)
+
+  if (error) {
+    // clear out the error
+    setError(null)
+    // let the error boundary catch this
+    throw error
+  }
+
+  useEffect(() => {
+    const watch = navigator.geolocation.watchPosition(
+      setPosition,
+      setError,
+      options,
+    )
+
+    return () => navigator.geolocation.clearWatch(watch)
+  }, [options])
+
+  return position
+}
 
 function useStickyScrollContainer(
   scrollContainerRef,
@@ -8,40 +33,37 @@ function useStickyScrollContainer(
 ) {
   const [isStuck, setStuck] = useState(true)
   useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
     function handleScroll() {
       const {
         clientHeight,
         scrollTop,
         scrollHeight,
-      } = scrollContainerRef.current
+      } = scrollContainer
       const partialPixelBuffer = 10
       const scrolledUp =
         clientHeight + scrollTop <
         scrollHeight - partialPixelBuffer
       setStuck(!scrolledUp)
     }
-    scrollContainerRef.current.addEventListener(
-      'scroll',
-      handleScroll,
-    )
+    scrollContainer.addEventListener('scroll', handleScroll)
     return () =>
-      scrollContainerRef.current.removeEventListener(
+      scrollContainer.removeEventListener(
         'scroll',
         handleScroll,
       )
-  }, [])
+  }, [scrollContainerRef])
+
+  const scrollHeight = scrollContainerRef.current
+    ? scrollContainerRef.current.scrollHeight
+    : 0
 
   useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
     if (isStuck) {
-      scrollContainerRef.current.scrollTop =
-        scrollContainerRef.current.scrollHeight
+      scrollContainer.scrollTop = scrollHeight
     }
-  }, [
-    scrollContainerRef.current
-      ? scrollContainerRef.current.scrollHeight
-      : 0,
-    ...inputs,
-  ])
+  }, [isStuck, scrollContainerRef, scrollHeight, ...inputs])
 
   return isStuck
 }
@@ -77,7 +99,7 @@ function useVisibilityCounter(containerRef) {
         ),
       )
     }
-  })
+  }, [containerRef, seenNodes])
 
   return seenNodes
 }
@@ -175,6 +197,24 @@ function App() {
       </div>
     </div>
   )
+}
+
+let initialPosition
+function getInitialPosition(options) {
+  if (!initialPosition) {
+    // supsense magic...
+    throw new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          initialPosition = position
+          resolve(position)
+        },
+        error => reject(error),
+        options,
+      )
+    })
+  }
+  return initialPosition
 }
 
 export default App
