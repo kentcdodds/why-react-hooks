@@ -7,16 +7,32 @@ function App() {
   } = useGeoPosition()
   const messagesContainerRef = React.useRef()
   const [messages, setMessages] = React.useState([])
-  const [username, setUsername] = React.useState(() =>
-    window.localStorage.getItem('geo-chat:username'),
-  )
-  useStickyScrollContainer(messagesContainerRef, [
-    messages.length,
-  ])
-  const visibleNodes = useVisibilityCounter(
-    messagesContainerRef,
-  )
+  const [username, setUsername] = useLocalStorageState('', {
+    key: 'geo-chat:username',
+  })
+  useStickyScrollContainer(messagesContainerRef, [messages.length])
+  const visibleNodes = useVisibilityCounter(messagesContainerRef)
   const unreadCount = messages.length - visibleNodes.length
+
+  React.useEffect(() => {
+    const unsubscribe = firebase.subscribe({latitude, longitude}, messages => {
+      setMessages(messages)
+    })
+    return () => {
+      unsubscribe()
+    }
+  }, [latitude, longitude])
+
+  React.useEffect(() => {
+    document.title = unreadCount ? `Unread: ${unreadCount}` : 'All read'
+  }, [unreadCount])
+
+  const initialDocumentTitle = React.useRef(document.title)
+  React.useEffect(() => {
+    return () => {
+      document.title = initialDocumentTitle
+    }
+  }, [])
 
   function sendMessage(e) {
     e.preventDefault()
@@ -30,31 +46,9 @@ function App() {
     e.target.elements.message.focus()
   }
 
-  React.useEffect(() => {
-    const unsubscribe = firebase.subscribe(
-      {latitude, longitude},
-      messages => {
-        setMessages(messages)
-      },
-    )
-    return () => {
-      unsubscribe()
-    }
-  }, [latitude, longitude])
-
-  React.useEffect(() => {
-    document.title = unreadCount
-      ? `Unread: ${unreadCount}`
-      : 'All read'
-  }, [unreadCount])
-
   function handleUsernameChange(e) {
     const username = e.target.value
     setUsername(username)
-    window.localStorage.setItem(
-      'geo-chat:username',
-      username,
-    )
   }
 
   return (
@@ -71,9 +65,7 @@ function App() {
         <input type="text" id="message" />
         <button type="submit">send</button>
       </form>
-      <pre>
-        {JSON.stringify({latitude, longitude}, null, 2)}
-      </pre>
+      <pre>{JSON.stringify({latitude, longitude}, null, 2)}</pre>
       <div
         id="messagesContainer"
         ref={messagesContainerRef}
@@ -87,8 +79,7 @@ function App() {
       >
         {messages.map(message => (
           <div key={message.id}>
-            <strong>{message.username}</strong>:{' '}
-            {message.content}
+            <strong>{message.username}</strong>: {message.content}
           </div>
         ))}
       </div>
@@ -96,10 +87,24 @@ function App() {
   )
 }
 
-function useGeoPosition(options) {
-  const [position, setPosition] = React.useState(
-    getInitialPosition(options),
+function useLocalStorageState(
+  initialValue,
+  {key, serializer = v => v, deserializer = v => v},
+) {
+  const [state, setState] = React.useState(
+    () => deserializer(window.localStorage.getItem(key)) || initialValue,
   )
+
+  const serializedState = serializer(state)
+  React.useEffect(() => {
+    window.localStorage.setItem(key, serializedState)
+  }, [key, serializedState])
+
+  return [state, setState]
+}
+
+function useGeoPosition(options) {
+  const [position, setPosition] = React.useState(getInitialPosition(options))
 
   const setError = useErrorBoundaryError()
 
@@ -116,31 +121,19 @@ function useGeoPosition(options) {
   return position
 }
 
-function useStickyScrollContainer(
-  scrollContainerRef,
-  inputs = [],
-) {
+function useStickyScrollContainer(scrollContainerRef, inputs = []) {
   const [isStuck, setStuck] = React.useState(true)
   React.useEffect(() => {
     const scrollContainer = scrollContainerRef.current
     function handleScroll() {
-      const {
-        clientHeight,
-        scrollTop,
-        scrollHeight,
-      } = scrollContainer
+      const {clientHeight, scrollTop, scrollHeight} = scrollContainer
       const partialPixelBuffer = 10
       const scrolledUp =
-        clientHeight + scrollTop <
-        scrollHeight - partialPixelBuffer
+        clientHeight + scrollTop < scrollHeight - partialPixelBuffer
       setStuck(!scrolledUp)
     }
     scrollContainer.addEventListener('scroll', handleScroll)
-    return () =>
-      scrollContainer.removeEventListener(
-        'scroll',
-        handleScroll,
-      )
+    return () => scrollContainer.removeEventListener('scroll', handleScroll)
   }, [scrollContainerRef])
 
   const scrollHeight = scrollContainerRef.current
@@ -161,18 +154,14 @@ function useStickyScrollContainer(
   return isStuck
 }
 
-function checkInView(
-  element,
-  container = element.parentElement,
-) {
+function checkInView(element, container = element.parentElement) {
   const cTop = container.scrollTop
   const cBottom = cTop + container.clientHeight
   const eTop = element.offsetTop - container.offsetTop
   const eBottom = eTop + element.clientHeight
   const isTotal = eTop >= cTop && eBottom <= cBottom
   const isPartial =
-    (eTop < cTop && eBottom > cTop) ||
-    (eBottom > cBottom && eTop < cBottom)
+    (eTop < cTop && eBottom > cTop) || (eBottom > cBottom && eTop < cBottom)
   return isTotal || isPartial
 }
 
@@ -180,16 +169,12 @@ function useVisibilityCounter(containerRef) {
   const [seenNodes, setSeenNodes] = React.useState([])
 
   React.useEffect(() => {
-    const newVisibleChildren = Array.from(
-      containerRef.current.children,
-    )
+    const newVisibleChildren = Array.from(containerRef.current.children)
       .filter(n => !seenNodes.includes(n))
       .filter(n => checkInView(n, containerRef.current))
     if (newVisibleChildren.length) {
       setSeenNodes(seen =>
-        Array.from(
-          new Set([...seen, ...newVisibleChildren]),
-        ),
+        Array.from(new Set([...seen, ...newVisibleChildren])),
       )
     }
   }, [containerRef, seenNodes])

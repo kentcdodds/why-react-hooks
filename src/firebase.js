@@ -12,12 +12,7 @@ try {
   })
 } catch (e) {}
 
-function addMessage({
-  latitude,
-  longitude,
-  content,
-  username,
-}) {
+function addMessage({latitude, longitude, content, username}) {
   const locationId = getLocationId({latitude, longitude})
   firebase
     .database()
@@ -33,23 +28,17 @@ function addMessage({
 
 function subscribe({latitude, longitude}, callback) {
   const locationId = getLocationId({latitude, longitude})
-  const ref = firebase
-    .database()
-    .ref(`messages/${locationId}/posts`)
+  const ref = firebase.database().ref(`messages/${locationId}/posts`)
   console.log('registering with locationid of ', locationId)
   ref.on('value', snapshot =>
     callback(
-      Object.entries(snapshot.val() || {}).map(
-        ([id, data]) => ({id, ...data}),
-      ),
+      Object.entries(snapshot.val() || {}).map(([id, data]) => ({id, ...data})),
     ),
   )
   return () => ref.off('value', callback)
 }
 
 const getLocationId = ({latitude, longitude}) =>
-  `${(latitude * 10).toFixed()}_${(
-    longitude * 10
-  ).toFixed()}`
+  `${(latitude * 10).toFixed()}_${(longitude * 10).toFixed()}`
 
 export {subscribe, addMessage}

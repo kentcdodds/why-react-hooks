@@ -2,18 +2,14 @@ import React from 'react'
 import {withGeoPosition} from 'react-fns'
 import * as firebase from './firebase'
 
-function checkInView(
-  element,
-  container = element.parentElement,
-) {
+function checkInView(element, container = element.parentElement) {
   const cTop = container.scrollTop
   const cBottom = cTop + container.clientHeight
   const eTop = element.offsetTop - container.offsetTop
   const eBottom = eTop + element.clientHeight
   const isTotal = eTop >= cTop && eBottom <= cBottom
   const isPartial =
-    (eTop < cTop && eBottom > cTop) ||
-    (eBottom > cBottom && eTop < cBottom)
+    (eTop < cTop && eBottom > cTop) || (eBottom > cBottom && eTop < cBottom)
   return isTotal || isPartial
 }
 
@@ -23,9 +19,7 @@ class App extends React.Component {
     longitude: -111,
   }
   state = {
-    username: window.localStorage.getItem(
-      'geo-chat:username',
-    ),
+    username: window.localStorage.getItem('geo-chat:username'),
     messages: [],
     seenNodes: [],
     isStuck: true,
@@ -66,12 +60,8 @@ class App extends React.Component {
     }
   }
   updateDocumentTitle() {
-    const unreadCount =
-      this.state.messages.length -
-      this.state.seenNodes.length
-    document.title = unreadCount
-      ? `Unread: ${unreadCount}`
-      : 'All read'
+    const unreadCount = this.state.messages.length - this.state.seenNodes.length
+    document.title = unreadCount ? `Unread: ${unreadCount}` : 'All read'
     console.log(document.title)
   }
   stickContainer() {
@@ -95,15 +85,11 @@ class App extends React.Component {
       } = this.messagesContainerRef.current
       const partialPixelBuffer = 10
       const scrolledUp =
-        clientHeight + scrollTop <
-        scrollHeight - partialPixelBuffer
+        clientHeight + scrollTop < scrollHeight - partialPixelBuffer
       console.log(scrolledUp)
       this.setState({isStuck: !scrolledUp})
     }
-    this.messagesContainerRef.current.addEventListener(
-      'scroll',
-      handleScroll,
-    )
+    this.messagesContainerRef.current.addEventListener('scroll', handleScroll)
     this.untrackStuck = () =>
       this.messagesContainerRef.current.removeEventListener(
         'scroll',
@@ -115,24 +101,17 @@ class App extends React.Component {
       this.messagesContainerRef.current.children,
     )
       .filter(n => !this.state.seenNodes.includes(n))
-      .filter(n =>
-        checkInView(n, this.messagesContainerRef.current),
-      )
+      .filter(n => checkInView(n, this.messagesContainerRef.current))
     if (newVisibleChildren.length) {
       this.setState(({seenNodes}) => ({
-        seenNodes: Array.from(
-          new Set([...seenNodes, ...newVisibleChildren]),
-        ),
+        seenNodes: Array.from(new Set([...seenNodes, ...newVisibleChildren])),
       }))
     }
   }
   handleUsernameChange = e => {
     const username = e.target.value
     this.setState({username})
-    window.localStorage.setItem(
-      'geo-chat:username',
-      username,
-    )
+    window.localStorage.setItem('geo-chat:username', username)
   }
   componentWillUnmount() {
     this.untrackStuck()
@@ -154,9 +133,7 @@ class App extends React.Component {
           <input type="text" id="message" />
           <button type="submit">send</button>
         </form>
-        <pre>
-          {JSON.stringify({latitude, longitude}, null, 2)}
-        </pre>
+        <pre>{JSON.stringify({latitude, longitude}, null, 2)}</pre>
         <div
           id="messagesContainer"
           ref={this.messagesContainerRef}
@@ -170,8 +147,7 @@ class App extends React.Component {
         >
           {this.state.messages.map(message => (
             <div key={message.id}>
-              <strong>{message.username}</strong>:{' '}
-              {message.content}
+              <strong>{message.username}</strong>: {message.content}
             </div>
           ))}
         </div>
@@ -180,13 +156,6 @@ class App extends React.Component {
   }
 }
 
-export default withGeoPosition(
-  ({isLoading, coords, error}) =>
-    isLoading ? (
-      'loading...'
-    ) : error ? (
-      'there was an error'
-    ) : (
-      <App {...coords} />
-    ),
+export default withGeoPosition(({isLoading, coords, error}) =>
+  isLoading ? 'loading...' : error ? 'there was an error' : <App {...coords} />,
 )
