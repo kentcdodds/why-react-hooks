@@ -36,7 +36,7 @@ class App extends React.Component {
     firebase.addMessage({
       latitude: this.props.latitude,
       longitude: this.props.longitude,
-      username: this.state.username.value || 'anonymous',
+      username: this.state.username || 'anonymous',
       content: e.target.elements.message.value,
     })
     e.target.elements.message.value = ''
@@ -79,13 +79,12 @@ class App extends React.Component {
   }
   subscribeToFirebase() {
     const {latitude, longitude} = this.props
-    const unsubscribe = firebase.subscribe(
+    this.unsubscribeFromFirebase = firebase.subscribe(
       {latitude, longitude},
       messages => {
         this.setState({messages: messages})
       },
     )
-    this.unsubscribeFromFirebase = unsubscribe()
   }
   trackStuck() {
     const handleScroll = () => {
