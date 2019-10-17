@@ -1,116 +1,13 @@
-import React, {useEffect, useState, useRef} from 'react'
+import React from 'react'
 import * as firebase from './firebase'
-
-function useGeoPosition(options) {
-  const [position, setPosition] = useState(
-    getInitialPosition(options),
-  )
-  const [error, setError] = useState(null)
-
-  if (error) {
-    // clear out the error
-    setError(null)
-    // let the error boundary catch this
-    throw error
-  }
-
-  useEffect(() => {
-    const watch = navigator.geolocation.watchPosition(
-      setPosition,
-      setError,
-      options,
-    )
-
-    return () => navigator.geolocation.clearWatch(watch)
-  }, [options])
-
-  return position
-}
-
-function useStickyScrollContainer(
-  scrollContainerRef,
-  inputs = [],
-) {
-  const [isStuck, setStuck] = useState(true)
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current
-    function handleScroll() {
-      const {
-        clientHeight,
-        scrollTop,
-        scrollHeight,
-      } = scrollContainer
-      const partialPixelBuffer = 10
-      const scrolledUp =
-        clientHeight + scrollTop <
-        scrollHeight - partialPixelBuffer
-      setStuck(!scrolledUp)
-    }
-    scrollContainer.addEventListener('scroll', handleScroll)
-    return () =>
-      scrollContainer.removeEventListener(
-        'scroll',
-        handleScroll,
-      )
-  }, [scrollContainerRef])
-
-  const scrollHeight = scrollContainerRef.current
-    ? scrollContainerRef.current.scrollHeight
-    : 0
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current
-    if (isStuck) {
-      scrollContainer.scrollTop = scrollHeight
-    }
-  }, [isStuck, scrollContainerRef, scrollHeight, ...inputs])
-
-  return isStuck
-}
-
-function checkInView(
-  element,
-  container = element.parentElement,
-) {
-  const cTop = container.scrollTop
-  const cBottom = cTop + container.clientHeight
-  const eTop = element.offsetTop - container.offsetTop
-  const eBottom = eTop + element.clientHeight
-  const isTotal = eTop >= cTop && eBottom <= cBottom
-  const isPartial =
-    (eTop < cTop && eBottom > cTop) ||
-    (eBottom > cBottom && eTop < cBottom)
-  return isTotal || isPartial
-}
-
-function useVisibilityCounter(containerRef) {
-  const [seenNodes, setSeenNodes] = useState([])
-
-  useEffect(() => {
-    const newVisibleChildren = Array.from(
-      containerRef.current.children,
-    )
-      .filter(n => !seenNodes.includes(n))
-      .filter(n => checkInView(n, containerRef.current))
-    if (newVisibleChildren.length) {
-      setSeenNodes(seen =>
-        Array.from(
-          new Set([...seen, ...newVisibleChildren]),
-        ),
-      )
-    }
-  }, [containerRef, seenNodes])
-
-  return seenNodes
-}
 
 function App() {
   const {
     coords: {latitude, longitude},
   } = useGeoPosition()
-  const messagesContainerRef = useRef()
-  const [messages, setMessages] = useState([])
-  const [username, setUsername] = useState(() =>
+  const messagesContainerRef = React.useRef()
+  const [messages, setMessages] = React.useState([])
+  const [username, setUsername] = React.useState(() =>
     window.localStorage.getItem('geo-chat:username'),
   )
   useStickyScrollContainer(messagesContainerRef, [
@@ -133,7 +30,7 @@ function App() {
     e.target.elements.message.focus()
   }
 
-  useEffect(() => {
+  React.useEffect(() => {
     const unsubscribe = firebase.subscribe(
       {latitude, longitude},
       messages => {
@@ -145,7 +42,7 @@ function App() {
     }
   }, [latitude, longitude])
 
-  useEffect(() => {
+  React.useEffect(() => {
     document.title = unreadCount
       ? `Unread: ${unreadCount}`
       : 'All read'
@@ -199,6 +96,107 @@ function App() {
   )
 }
 
+function useGeoPosition(options) {
+  const [position, setPosition] = React.useState(
+    getInitialPosition(options),
+  )
+
+  const setError = useErrorBoundaryError()
+
+  React.useEffect(() => {
+    const watch = navigator.geolocation.watchPosition(
+      setPosition,
+      setError,
+      options,
+    )
+
+    return () => navigator.geolocation.clearWatch(watch)
+  }, [options, setError])
+
+  return position
+}
+
+function useStickyScrollContainer(
+  scrollContainerRef,
+  inputs = [],
+) {
+  const [isStuck, setStuck] = React.useState(true)
+  React.useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
+    function handleScroll() {
+      const {
+        clientHeight,
+        scrollTop,
+        scrollHeight,
+      } = scrollContainer
+      const partialPixelBuffer = 10
+      const scrolledUp =
+        clientHeight + scrollTop <
+        scrollHeight - partialPixelBuffer
+      setStuck(!scrolledUp)
+    }
+    scrollContainer.addEventListener('scroll', handleScroll)
+    return () =>
+      scrollContainer.removeEventListener(
+        'scroll',
+        handleScroll,
+      )
+  }, [scrollContainerRef])
+
+  const scrollHeight = scrollContainerRef.current
+    ? scrollContainerRef.current.scrollHeight
+    : 0
+
+  React.useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
+    if (isStuck) {
+      scrollContainer.scrollTop = scrollHeight
+    }
+    // ignoring this rule is dangerous and not recommended
+    // but sometimes it's the only way you can create the API you want.
+    // 99% of the time you should not disable this rule.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStuck, scrollContainerRef, scrollHeight, ...inputs])
+
+  return isStuck
+}
+
+function checkInView(
+  element,
+  container = element.parentElement,
+) {
+  const cTop = container.scrollTop
+  const cBottom = cTop + container.clientHeight
+  const eTop = element.offsetTop - container.offsetTop
+  const eBottom = eTop + element.clientHeight
+  const isTotal = eTop >= cTop && eBottom <= cBottom
+  const isPartial =
+    (eTop < cTop && eBottom > cTop) ||
+    (eBottom > cBottom && eTop < cBottom)
+  return isTotal || isPartial
+}
+
+function useVisibilityCounter(containerRef) {
+  const [seenNodes, setSeenNodes] = React.useState([])
+
+  React.useEffect(() => {
+    const newVisibleChildren = Array.from(
+      containerRef.current.children,
+    )
+      .filter(n => !seenNodes.includes(n))
+      .filter(n => checkInView(n, containerRef.current))
+    if (newVisibleChildren.length) {
+      setSeenNodes(seen =>
+        Array.from(
+          new Set([...seen, ...newVisibleChildren]),
+        ),
+      )
+    }
+  }, [containerRef, seenNodes])
+
+  return seenNodes
+}
+
 let initialPosition
 function getInitialPosition(options) {
   if (!initialPosition) {
@@ -215,6 +213,19 @@ function getInitialPosition(options) {
     })
   }
   return initialPosition
+}
+
+function useErrorBoundaryError() {
+  const [error, setError] = React.useState(null)
+
+  if (error) {
+    // clear out the error
+    setError(null)
+    // let the error boundary catch this
+    throw error
+  }
+
+  return setError
 }
 
 export default App
